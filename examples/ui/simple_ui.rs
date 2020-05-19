@@ -2,7 +2,10 @@ use nannou::prelude::*;
 use nannou::ui::prelude::*;
 
 fn main() {
-    nannou::app(model).update(update).simple_window(view).run();
+    nannou::app(model)
+        .update(update)
+        .simple_window(view)
+        .run();
 }
 
 struct Model {
@@ -76,6 +79,7 @@ fn update(_app: &App, model: &mut Model, _update: Update) {
         .set(model.ids.resolution, ui)
     {
         model.resolution = value as usize;
+        println!("Resolution = {}", value);
     }
 
     for value in slider(model.scale, 10.0, 500.0)

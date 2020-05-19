@@ -1,3 +1,4 @@
+use core::time::Duration;
 use nannou::prelude::*;
 use nannou::ui::prelude::*;
 use nannou_audio as audio;
@@ -59,28 +60,29 @@ struct Ids {
 }
 
 fn model(app: &App) -> Model {
-    // Create a window to receive key pressed events.
-    app.new_window()
-        .key_pressed(key_pressed)
-        .view(view)
-        .build()
-        .unwrap();
+    // println!("model() called...");
+
     // Initialise the audio API so we can spawn an audio stream.
     let audio_host = audio::Host::new();
     // Initialise the state that we want to live on the audio thread.
-    let model = Audio {
+    let audio_model = Audio {
         phase: 0.0,
         hz: 440.0,
         vol: 0.5
     };
     let stream = audio_host
-        .new_output_stream(model)
+        .new_output_stream(audio_model)
         .render(audio)
         .build()
         .unwrap();
 
     // Create the UI
     let mut ui = app.new_ui().build().unwrap();
+
+    // TODO: is this appropriate/necessary?
+    // app.set_loop_mode(LoopMode::Rate {
+    //     update_interval: Duration::from_millis(1),
+    // });
 
     // Generate some ids for our widgets.
     let ids = Ids {
@@ -111,6 +113,8 @@ fn model(app: &App) -> Model {
 }
 
 fn update(_app: &App, model: &mut Model, _update: Update) {
+    // println!("update() called...");
+
     // Calling `set_widgets` allows us to instantiate some widgets.
     let ui = &mut model.ui.set_widgets();
 
@@ -129,14 +133,27 @@ fn update(_app: &App, model: &mut Model, _update: Update) {
         .set(model.ids.resolution, ui)
     {
         model.resolution = value as usize;
+        println!("Resolution = {}", value);
     }
 
-    for value in slider(model.scale, 10.0, 500.0)
+    for value in slider(model.scale, 0.0, 1.0)
         .down(10.0)
         .label("Scale")
         .set(model.ids.scale, ui)
     {
+        // existing code
         model.scale = value;
+        println!("Scale = {}", value);
+
+        // TODO: trying to set volume with slider...
+        // model
+        //     .stream
+        //     .send(|audio| {
+        //         audio.hz = model.scale as f64;
+        //         println!("Audio hz = {}", audio.hz);
+        //     })
+        //     .unwrap();
+
     }
 
     for value in slider(model.rotation, -PI as f32, PI as f32)
@@ -145,6 +162,7 @@ fn update(_app: &App, model: &mut Model, _update: Update) {
         .set(model.ids.rotation, ui)
     {
         model.rotation = value;
+        println!("Rotation = {}", value);
     }
 
     for _click in widget::Button::new()
@@ -158,6 +176,7 @@ fn update(_app: &App, model: &mut Model, _update: Update) {
         .set(model.ids.random_color, ui)
     {
         model.color = rgb(random(), random(), random());
+        println!("Random color set");
     }
 
     for (x, y) in widget::XYPad::new(
@@ -178,6 +197,7 @@ fn update(_app: &App, model: &mut Model, _update: Update) {
         .set(model.ids.position, ui)
     {
         model.position = Point2::new(x, y);
+        println!("Position set");
     }
 }
 
@@ -203,6 +223,8 @@ fn update(_app: &App, model: &mut Model, _update: Update) {
 // }
 
 fn view(app: &App, model: &Model, frame: Frame) {
+    // println!("view() called...");
+
     // frame.clear(DIMGRAY);
     // Begin drawing
     let draw = app.draw();
@@ -225,10 +247,18 @@ fn view(app: &App, model: &Model, frame: Frame) {
 
 // A function that renders the given `Audio` to the given `Buffer`.
 // In this case we play a simple sine wave at the audio's current frequency in `hz`.
+
+// fn audio(audio: &mut Audio, buffer: &mut Buffer, model: &mut Model) { // TODO: model doesn't need to be &ref
 fn audio(audio: &mut Audio, buffer: &mut Buffer) {
+    println!("audio() called...");
+
     let sample_rate = buffer.sample_rate() as f64;
-    // let volume = 0.5;
+
+    // Set volume
     let volume = audio.vol;
+    // let volume = model.scale;
+    // println!("vol = {}", model.scale);
+
     for frame in buffer.frames_mut() {
         let sine_amp = (2.0 * PI * audio.phase).sin() as f32;
         audio.phase += audio.hz / sample_rate;
@@ -240,6 +270,8 @@ fn audio(audio: &mut Audio, buffer: &mut Buffer) {
 }
 
 fn key_pressed(_app: &App, model: &mut Model, key: Key) {
+    // println!("key_pressed() called...");
+
     match key {
         // Pause or unpause the audio when Space is pressed.
         Key::Space => {
@@ -275,7 +307,11 @@ fn key_pressed(_app: &App, model: &mut Model, key: Key) {
             model
                 .stream
                 .send(|audio| {
-                    audio.vol += 0.1;
+                    if audio.vol + 0.1 > 1.0 {
+                        audio.vol = 0.9;
+                    } else {
+                        audio.vol += 0.1;
+                    }
                     println!("Audio vol = {}", audio.vol);
                 })
                 .unwrap();
@@ -286,7 +322,11 @@ fn key_pressed(_app: &App, model: &mut Model, key: Key) {
             model
                 .stream
                 .send(|audio| {
-                    audio.vol -= 0.1;
+                    if audio.vol - 0.1 < 0.0 {
+                        audio.vol = 0.1;
+                    } else {
+                        audio.vol -= 0.1;
+                    }
                     println!("Audio vol = {}", audio.vol);
                 })
                 .unwrap();
