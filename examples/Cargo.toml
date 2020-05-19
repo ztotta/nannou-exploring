@@ -27,6 +27,7 @@ nannou_timeline = { version ="0.14.0", features = ["serde1"], path =  "../nannou
 pitch_calc = { version = "0.12", features = ["serde"] }
 time_calc = { version= "0.13", features = ["serde"] }
 walkdir = "2"
+crossbeam = "0.7.3"
 
 # Audio
 [[example]]
@@ -35,6 +36,9 @@ path = "audio/simple_audio.rs"
 [[example]]
 name = "simple_audio_file"
 path = "audio/simple_audio_file.rs"
+[[example]]
+name = "sag"
+path = "audio/simple_audio_gui.rs"
 
 # Communication
 [[example]]

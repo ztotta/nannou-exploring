@@ -4,6 +4,7 @@ simple_capture/
 draw_capture/
 draw_capture_hi_res/
 target/
+.idea/
 **/*.rs.bk
 Cargo.lock
 .DS_Store
